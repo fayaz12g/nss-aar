@@ -1,78 +1,43 @@
 import os
+import requests
+import zipfile
+import shutil
+import getpass
 
 def download_extract_copy(input_folder, mod_name):
-    import requests
-    import zipfile
-    import shutil
-    import getpass
-
-    # URL of the ZIP file
-    zip_url = "https://github.com/fayaz12g/aar-files/raw/main/PPST/UI.zip"
-    zip2_url = "https://github.com/fayaz12g/aar-files/raw/main/PPST/Layout.zip"
-
+    zip2_url = "https://github.com/fayaz12g/aar-files/raw/main/nss/Layout.zip"
     username = getpass.getuser()
-    directory_path = f"C:/Users/{username}/AppData/Roaming/AnyAspectRatio/perm/PPST"
-    # Check if the directory exists
-    if not os.path.exists(directory_path):
-        # Create the directory if it doesn't exist
-        os.makedirs(directory_path)
-        print(f"Directory {directory_path} created successfully.")
-    else:
-        print(f"Directory {directory_path} already exists.")
-    perm_folder = f"C:/Users/{username}/AppData/Roaming/AnyAspectRatio/perm/PPST"
-    zip_file_source = os.path.join(perm_folder, "UI.zip")
+    perm_folder = f"C:/Users/{username}/AppData/Roaming/AnyAspectRatio/perm/nss"
     zip2_file_source = os.path.join(perm_folder, "Layout.zip")
+    extract2_folder = os.path.join(input_folder, mod_name, "temp2")
+    romfs_folder = os.path.join(input_folder, mod_name, "romfs")
+    dst2_folder_path = os.path.join(romfs_folder, "Layout")
 
-    if not os.path.isfile(zip_file_source):
-        # Download the ZIP file
-        print("Downloading zip file. This may take up to 10 seconds.")
-        response = requests.get(zip_url)
-        print("Zip file downloaded.")
-        with open(zip_file_source, "wb") as file:
-            print("Writing contents to temp folder.")
-            file.write(response.content)
-
-    # Extract the ZIP file
-    extract_folder = os.path.join(input_folder, mod_name, "temp1")
-    print(f"Extracting zip to {extract_folder}. This can also take a few seconds.")
-    with zipfile.ZipFile(zip_file_source, "r") as zip_ref:
-        zip_ref.extractall(extract_folder)
+    # Ensure the permanent folder exists
+    os.makedirs(perm_folder, exist_ok=True)
     
+    # Download the ZIP file if it doesn't exist
     if not os.path.isfile(zip2_file_source):
-        # Download the ZIP file
         print("Downloading zip file. This may take up to 10 seconds.")
         response = requests.get(zip2_url)
-        print("Zip file downloaded.")
         with open(zip2_file_source, "wb") as file:
-            print("Writing contents to temp folder.")
             file.write(response.content)
+        print("Zip file downloaded and saved.")
 
     # Extract the ZIP file
-    extract2_folder = os.path.join(input_folder, mod_name, "temp2")
     print(f"Extracting zip to {extract2_folder}. This can also take a few seconds.")
     with zipfile.ZipFile(zip2_file_source, "r") as zip_ref:
         zip_ref.extractall(extract2_folder)
 
-
-    # Copy the extracted file
-    print("Copying extracted files")
-    romfs_folder = os.path.join(input_folder, mod_name, "romfs")
-    extracted_folder = os.path.join(extract_folder)
-    extracted2_folder = os.path.join(extract2_folder)
-    dst_folder_path = os.path.join(romfs_folder, "UI")
-    dst2_folder_path = os.path.join(romfs_folder, "Layout")
-
-    # Remove the existing destination folder if it exists
+    # Remove existing destination folder if it exists and copy the extracted files
     if os.path.exists(romfs_folder):
         shutil.rmtree(romfs_folder)
-
-    # Recreate the destination folder and copy the content
-    os.makedirs(os.path.dirname(dst_folder_path), exist_ok=True)
+    
     os.makedirs(os.path.dirname(dst2_folder_path), exist_ok=True)
-    shutil.copytree(extracted_folder, dst_folder_path)
-    shutil.copytree(extracted2_folder, dst2_folder_path)
+    shutil.copytree(extract2_folder, dst2_folder_path)
 
-    # Clean up
+    # Clean up extracted temporary files
     print("Cleaning up old files")
-    shutil.rmtree(extract_folder)
     shutil.rmtree(extract2_folder)
+
+    print("Process completed successfully.")
